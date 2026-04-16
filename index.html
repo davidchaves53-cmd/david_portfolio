@@ -164,9 +164,51 @@
         box-shadow: none;
     }
 
+    /* Chatbot UI */
+    #chatbot {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        width: 280px;
+        height: 380px;
+        background: #0b0b12;
+        border: 1px solid #00ff8855;
+        border-radius: 12px;
+        box-shadow: 0 0 15px #00ff8855;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        z-index: 9999;
+    }
+
+    #chat-header {
+        background: #00ff88;
+        color: #000;
+        padding: 10px;
+        font-weight: bold;
+        text-align: center;
+    }
+
+    #chat-messages {
+        flex: 1;
+        padding: 10px;
+        overflow-y: auto;
+        color: #e0e0e0;
+        font-size: 0.9rem;
+    }
+
+    #chat-input {
+        border: none;
+        padding: 10px;
+        background: #1a1a22;
+        color: #e0e0e0;
+        outline: none;
+    }
+
     @media (max-width: 600px) {
         body { cursor: auto; }
         .cursor-dot { display: none; }
+        #chatbot { width: 90%; right: 5%; }
     }
 </style>
 </head>
@@ -182,7 +224,6 @@
 </button>
 
 <audio id="ambientAudio" loop>
-    <!-- tiny embedded ambient tone (placeholder) -->
     <source src="data:audio/mp3;base64,//uQxAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAACAAACcQCAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA" type="audio/mp3">
 </audio>
 
@@ -284,6 +325,13 @@
 <footer>
     © 2026 David Chaves — AI Portfolio
 </footer>
+
+<!-- Chatbot UI -->
+<div id="chatbot">
+    <div id="chat-header">AI Chatbot</div>
+    <div id="chat-messages"></div>
+    <input id="chat-input" placeholder="Type a message...">
+</div>
 
 <script>
     function toggleDetails(id) {
@@ -476,6 +524,40 @@
             window.removeEventListener('click', once);
         });
     });
+
+    /* Chatbot JS */
+    const API_URL = "https://54c5743a-d4b2-4798-b9f5-05267a7cde00-00-3lix5lgl5snhr.worf.replit.dev/chat";
+
+    const chatInput = document.getElementById("chat-input");
+    const chatMessages = document.getElementById("chat-messages");
+
+    chatInput.addEventListener("keydown", async (e) => {
+        if (e.key === "Enter") {
+            const msg = chatInput.value.trim();
+            if (!msg) return;
+            chatInput.value = "";
+            addMessage("You", msg);
+
+            try {
+                const response = await fetch(API_URL, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ message: msg })
+                });
+                const data = await response.json();
+                addMessage("Bot", data.response || "(no response)");
+            } catch (err) {
+                addMessage("Bot", "⚠️ Chatbot server offline or unreachable.");
+            }
+        }
+    });
+
+    function addMessage(sender, text) {
+        const div = document.createElement("div");
+        div.innerHTML = `<strong>${sender}:</strong> ${text}`;
+        chatMessages.appendChild(div);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
 </script>
 
 </body>
